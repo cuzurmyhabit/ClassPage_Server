@@ -28,6 +28,13 @@ function focusMonthFromDate(eventDate: string): string {
   return `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-01`;
 }
 
+function daysFromToday(eventDate: string): number {
+  const today = new Date(todayIsoDate() + 'T00:00:00');
+  const target = new Date(eventDate + 'T00:00:00');
+  const diffMs = target.getTime() - today.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export type ImportEventInput = {
   title: string;
   description?: string;
@@ -39,6 +46,11 @@ export type ImportEventsSummary = {
   deleted: number;
   skipped: number;
   focus_month: string;
+};
+
+export type UpcomingEventItem = Event & {
+  days_left: number;
+  is_today: boolean;
 };
 
 @Injectable()
@@ -55,6 +67,17 @@ export class EventsService {
       relations: ['creator'],
       order: { event_date: 'ASC' },
       take: limit,
+    });
+  }
+
+  async findUpcomingWithCountdown(limit = 5): Promise<UpcomingEventItem[]> {
+    const events = await this.findUpcoming(limit);
+    return events.map((event) => {
+      const daysLeft = daysFromToday(event.event_date);
+      return Object.assign(event, {
+        days_left: daysLeft,
+        is_today: daysLeft === 0,
+      });
     });
   }
 

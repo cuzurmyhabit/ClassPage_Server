@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmploymentPost } from '../entities/employment-post.entity';
 import { EmploymentService } from './employment.service';
 import { EmploymentController } from './employment.controller';
-import { RolesGuard } from '../auth/roles.guard';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EmploymentPost])],
+  imports: [TypeOrmModule.forFeature([EmploymentPost]), SettingsModule],
   controllers: [EmploymentController],
-  providers: [EmploymentService, RolesGuard],
+  providers: [EmploymentService],
   exports: [EmploymentService],
 })
 export class EmploymentModule {}

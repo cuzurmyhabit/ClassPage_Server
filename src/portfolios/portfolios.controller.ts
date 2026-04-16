@@ -29,6 +29,11 @@ export class PortfoliosController {
     return this.portfoliosService.findByStudent(user.id);
   }
 
+  @Get('me')
+  findMine(@CurrentUser() user: User) {
+    return this.portfoliosService.findByStudent(user.id);
+  }
+
   @Post()
   @UseGuards(RolesGuard)
   @Roles('student')

@@ -94,6 +94,7 @@ export class AdminService {
       'school_code',
       'school_display_name',
       'schedule_source',
+      'employment_manager_user_id',
     ] as const;
     for (const k of keys) {
       const v = data[k];

@@ -28,4 +28,8 @@ export class UpdateSettingsDto {
   @IsString()
   @IsOptional()
   schedule_source?: string;
+
+  @IsString()
+  @IsOptional()
+  employment_manager_user_id?: string;
 }

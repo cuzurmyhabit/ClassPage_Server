@@ -11,8 +11,6 @@ import {
 import { EmploymentService } from './employment.service';
 import { CreateEmploymentDto } from './dto/create-employment.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { User } from '../entities/user.entity';
 
@@ -26,20 +24,28 @@ export class EmploymentController {
     return this.employmentService.findAll();
   }
 
+  @Get('permission')
+  async canManage(@CurrentUser() user: User) {
+    try {
+      await this.employmentService.assertCanManageEmployment(user.id, user.role);
+      return { canManage: true };
+    } catch {
+      return { canManage: false };
+    }
+  }
+
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'career')
-  create(
+  async create(
     @Body() dto: CreateEmploymentDto,
     @CurrentUser() user: User,
   ) {
+    await this.employmentService.assertCanManageEmployment(user.id, user.role);
     return this.employmentService.create(dto, user.id);
   }
 
   @Delete(':id')
-  @UseGuards(RolesGuard)
-  @Roles('admin', 'career')
-  delete(@Param('id', ParseIntPipe) id: number) {
+  async delete(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: User) {
+    await this.employmentService.assertCanManageEmployment(user.id, user.role);
     return this.employmentService.delete(id);
   }
 }

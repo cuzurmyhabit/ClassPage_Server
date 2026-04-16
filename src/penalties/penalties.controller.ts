@@ -37,6 +37,13 @@ export class PenaltiesController {
     };
   }
 
+  @Get('this-week')
+  async findThisWeek() {
+    const weekStart = this.penaltiesService.weekStartForOffset(0);
+    const penalties = await this.penaltiesService.findByWeek(weekStart);
+    return { penalties, weekStart };
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'teacher')

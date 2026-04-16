@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   school_code: '',
   school_display_name: '',
   schedule_source: 'pdf',
+  employment_manager_user_id: '',
 };
 
 @Injectable()

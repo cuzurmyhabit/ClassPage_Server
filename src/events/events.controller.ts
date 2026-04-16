@@ -52,7 +52,13 @@ export class EventsController {
   findUpcoming(@Query('limit') limit?: string) {
     const n = limit !== undefined ? parseInt(limit, 10) : 5;
     const lim = Number.isFinite(n) && n > 0 ? n : 5;
-    return this.eventsService.findUpcoming(lim);
+    return this.eventsService.findUpcomingWithCountdown(lim);
+  }
+
+  @Get('headline')
+  async findHeadline() {
+    const rows = await this.eventsService.findUpcomingWithCountdown(1);
+    return rows[0] ?? null;
   }
 
   @Post()
