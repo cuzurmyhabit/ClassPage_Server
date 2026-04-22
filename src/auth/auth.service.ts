@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -33,5 +37,38 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async bootstrapAdmin(
+    username: string,
+    password: string,
+    name: string,
+  ): Promise<{
+    access_token: string;
+    user: {
+      id: number;
+      username: string;
+      name: string;
+      role: string;
+    };
+  }> {
+    const userCount = await this.usersRepo.count();
+    if (userCount > 0) {
+      throw new ForbiddenException(
+        '초기 관리자 생성은 사용자 정보가 비어 있을 때만 가능합니다.',
+      );
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    await this.usersRepo.save(
+      this.usersRepo.create({
+        username,
+        password_hash,
+        name,
+        role: 'admin',
+      }),
+    );
+
+    return this.login(username, password);
   }
 }
