@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   ForbiddenException,
   NotFoundException,
@@ -7,6 +8,27 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Portfolio } from '../entities/portfolio.entity';
 import { UserRole } from '../entities/user.entity';
+import { CreatePortfolioDto } from './dto/create-portfolio.dto';
+
+const PDF_PREFIX = 'data:application/pdf';
+
+function assertPdfDataUrl(file: {
+  name: string;
+  size: number;
+  dataUrl: string;
+  uploadedAt: string;
+}): void {
+  if (typeof file.dataUrl !== 'string' || !file.dataUrl.startsWith(PDF_PREFIX)) {
+    throw new BadRequestException('PDF data URL 형식만 허용됩니다.');
+  }
+  if (!Number.isFinite(file.size) || file.size <= 0) {
+    throw new BadRequestException('파일 크기가 올바르지 않습니다.');
+  }
+  const maxBytes = 10 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new BadRequestException('PDF는 10MB 이하만 업로드할 수 있습니다.');
+  }
+}
 
 @Injectable()
 export class PortfoliosService {
@@ -38,20 +60,26 @@ export class PortfoliosService {
     return this.portfolioRepo.count({ where: { student_id: studentId } });
   }
 
-  async create(
-    data: {
-      title: string;
-      summary?: string;
-      content: string;
-      link?: string;
-    },
-    studentId: number,
-  ): Promise<Portfolio> {
+  async create(dto: CreatePortfolioDto, studentId: number): Promise<Portfolio> {
+    if (!dto.resume && !dto.portfolio) {
+      throw new BadRequestException(
+        '이력서 또는 포트폴리오 PDF 중 최소 1개는 첨부해야 합니다.',
+      );
+    }
+    if (dto.resume) assertPdfDataUrl(dto.resume);
+    if (dto.portfolio) assertPdfDataUrl(dto.portfolio);
+
+    const content = JSON.stringify({
+      v: 1,
+      resume: dto.resume ?? null,
+      portfolio: dto.portfolio ?? null,
+    });
+
     const row = this.portfolioRepo.create({
-      title: data.title,
-      summary: data.summary ?? '',
-      content: data.content,
-      link: data.link ?? '',
+      title: dto.title,
+      summary: dto.summary ?? '',
+      content,
+      link: dto.link ?? '',
       student_id: studentId,
     });
     const saved = await this.portfolioRepo.save(row);

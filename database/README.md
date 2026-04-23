@@ -11,6 +11,12 @@ docker compose up -d
 - MySQL 8.4 컨테이너가 실행됩니다.
 - 최초 실행 시 `database/init.sql`이 자동 적용되어 테이블/기본 설정이 생성됩니다.
 
+이미 예전 스키마로 DB 볼륨을 쓰는 경우, 포트폴리오 PDF(data URL) 저장을 위해 **한 번** 아래를 적용하세요.
+
+```bash
+docker exec -i classpage-db mysql -uclasspage -pclasspage1234 classpage < database/alter-portfolios-content-longtext.sql
+```
+
 ## 2) 애플리케이션 .env 설정
 
 `.env`에 아래 값을 채워 주세요.

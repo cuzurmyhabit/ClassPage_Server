@@ -26,7 +26,8 @@ export class Portfolio {
   @Column({ type: 'text', default: '' })
   summary: string;
 
-  @Column({ type: 'text' })
+  /** PDF 파일(data URL) 등 큰 payload — JSON 문자열 저장 */
+  @Column({ type: 'longtext' })
   content: string;
 
   @Column({ length: 500, default: '' })
