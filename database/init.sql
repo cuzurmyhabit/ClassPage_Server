@@ -111,9 +111,9 @@ CREATE TABLE IF NOT EXISTS meal_cache (
 INSERT INTO settings (`key`, value) VALUES
   ('school_name', '학급 운영 홈'),
   ('class_name', '3학년 1반'),
-  ('office_code', ''),
-  ('office_name', ''),
-  ('school_code', ''),
+  ('office_code', 'B10'),
+  ('office_name', '서울특별시교육청'),
+  ('school_code', '7011569'),
   ('school_display_name', ''),
   ('schedule_source', 'pdf'),
   ('employment_manager_user_id', '')

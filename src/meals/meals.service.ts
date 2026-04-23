@@ -27,19 +27,69 @@ function startOfWeekMonday(ref: Date): Date {
   return d;
 }
 
-function parseNeisMealDish(payload: unknown): string | null {
+type MealSectionJson = { dishes: string[]; kcal?: number };
+
+type StructuredDayMeals = {
+  breakfast?: MealSectionJson;
+  lunch?: MealSectionJson;
+  dinner?: MealSectionJson;
+};
+
+function splitDishes(raw: string): string[] {
+  const text = raw.replace(/<br\s*\/?>/gi, '\n');
+  return text
+    .split('\n')
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function parseKcal(calInfo: unknown): number | undefined {
+  if (typeof calInfo !== 'string') return undefined;
+  const m = calInfo.match(/([0-9]+(?:\.[0-9]+)?)\s*KCAL/i);
+  if (!m) return undefined;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? Math.round(n) : undefined;
+}
+
+function mealSlotFromName(name: unknown): keyof StructuredDayMeals | null {
+  if (typeof name !== 'string') return null;
+  const n = name.trim();
+  if (/조식|아침/.test(n)) return 'breakfast';
+  if (/중식|점심/.test(n)) return 'lunch';
+  if (/석식|저녁/.test(n)) return 'dinner';
+  return null;
+}
+
+function parseNeisStructuredMeals(payload: unknown): StructuredDayMeals | null {
   if (!payload || typeof payload !== 'object') return null;
   const root = payload as Record<string, unknown>;
   const block = root.mealServiceDietInfo;
   if (!Array.isArray(block) || block.length < 2) return null;
   const dataPart = block[1] as Record<string, unknown> | undefined;
-  if (!dataPart || !Array.isArray(dataPart.row) || dataPart.row.length === 0) {
-    return null;
+  if (!dataPart || dataPart.row === undefined) return null;
+
+  const rows = Array.isArray(dataPart.row)
+    ? (dataPart.row as Record<string, unknown>[])
+    : [dataPart.row as Record<string, unknown>];
+
+  const out: StructuredDayMeals = {};
+  for (const row of rows) {
+    const rawDish = row.DDISH_NM;
+    if (typeof rawDish !== 'string') continue;
+    const dishes = splitDishes(rawDish);
+    if (dishes.length === 0) continue;
+    const slot =
+      mealSlotFromName(row.MMEAL_SC_NM) ??
+      (rows.length === 1 ? 'lunch' : null);
+    if (!slot) continue;
+    const kcal = parseKcal(row.CAL_INFO);
+    const prev = out[slot];
+    out[slot] = {
+      dishes: prev ? [...prev.dishes, ...dishes] : dishes,
+      kcal: kcal ?? prev?.kcal,
+    };
   }
-  const row0 = dataPart.row[0] as Record<string, unknown>;
-  const raw = row0.DDISH_NM;
-  if (typeof raw !== 'string') return null;
-  return raw.replace(/<br\s*\/?>/gi, '\n');
+  return Object.keys(out).length > 0 ? out : null;
 }
 
 @Injectable()
@@ -113,11 +163,10 @@ export class MealsService {
         await this.cacheMeal(mealDate, content);
         return content;
       }
-      const dish = parseNeisMealDish(payload);
-      content =
-        dish && dish.trim().length > 0
-          ? dish
-          : '해당 날짜의 급식 정보가 없습니다.';
+      const structured = parseNeisStructuredMeals(payload);
+      content = structured
+        ? JSON.stringify(structured)
+        : '해당 날짜의 급식 정보가 없습니다.';
     } catch {
       content = '급식 정보를 불러오지 못했습니다.';
     }
