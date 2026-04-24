@@ -60,6 +60,20 @@ function mealSlotFromName(name: unknown): keyof StructuredDayMeals | null {
   return null;
 }
 
+/** 나이스 MMEAL_SC_CODE: 1 조식, 2 중식, 3 석식 */
+function mealSlotFromCode(code: unknown): keyof StructuredDayMeals | null {
+  const n =
+    typeof code === 'number'
+      ? code
+      : typeof code === 'string'
+        ? parseInt(code, 10)
+        : NaN;
+  if (n === 1) return 'breakfast';
+  if (n === 2) return 'lunch';
+  if (n === 3) return 'dinner';
+  return null;
+}
+
 function parseNeisStructuredMeals(payload: unknown): StructuredDayMeals | null {
   if (!payload || typeof payload !== 'object') return null;
   const root = payload as Record<string, unknown>;
@@ -80,6 +94,7 @@ function parseNeisStructuredMeals(payload: unknown): StructuredDayMeals | null {
     if (dishes.length === 0) continue;
     const slot =
       mealSlotFromName(row.MMEAL_SC_NM) ??
+      mealSlotFromCode(row.MMEAL_SC_CODE) ??
       (rows.length === 1 ? 'lunch' : null);
     if (!slot) continue;
     const kcal = parseKcal(row.CAL_INFO);
@@ -144,8 +159,19 @@ export class MealsService {
 
     if (!forceRefresh) {
       const cached = await this.mealCacheRepo.findOneBy({ meal_date: mealDate });
-      if (cached) {
-        return cached.content;
+      if (cached?.content?.trim()) {
+        const c = cached.content.trim();
+        // 예전 버전에서 실패/안내 문구를 캐시한 경우 → 무시하고 NEIS 재조회
+        if (c.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(c) as Record<string, unknown>;
+            if (parsed.breakfast || parsed.lunch || parsed.dinner) {
+              return cached.content;
+            }
+          } catch {
+            /* 재조회 */
+          }
+        }
       }
     }
 
@@ -153,6 +179,8 @@ export class MealsService {
     const url = new URL('https://open.neis.go.kr/hub/mealServiceDietInfo');
     url.searchParams.set('KEY', apiKey);
     url.searchParams.set('Type', 'json');
+    url.searchParams.set('pIndex', '1');
+    url.searchParams.set('pSize', '100');
     url.searchParams.set('ATPT_OFCDC_SC_CODE', officeCode);
     url.searchParams.set('SD_SCHUL_CODE', schoolCode);
     url.searchParams.set('MLSV_YMD', ymd);
@@ -165,19 +193,23 @@ export class MealsService {
       try {
         payload = JSON.parse(text) as unknown;
       } catch {
-        content = '급식 정보를 불러오지 못했습니다.';
-        await this.cacheMeal(mealDate, content);
-        return content;
+        await this.mealCacheRepo.delete({ meal_date: mealDate }).catch(() => undefined);
+        return '급식 정보를 불러오지 못했습니다.';
       }
       const structured = parseNeisStructuredMeals(payload);
-      content = structured
-        ? JSON.stringify(structured)
-        : '해당 날짜의 급식 정보가 없습니다.';
+      content =
+        structured && Object.keys(structured).length > 0
+          ? JSON.stringify(structured)
+          : '{}';
     } catch {
       content = '급식 정보를 불러오지 못했습니다.';
     }
 
-    await this.cacheMeal(mealDate, content);
+    if (content.trim().startsWith('{')) {
+      await this.cacheMeal(mealDate, content);
+    } else {
+      await this.mealCacheRepo.delete({ meal_date: mealDate }).catch(() => undefined);
+    }
     return content;
   }
 
