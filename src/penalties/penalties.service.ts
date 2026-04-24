@@ -39,6 +39,15 @@ export class PenaltiesService {
     });
   }
 
+  /** UI 전체 탭·대시보드용: 최근 패널티 (클래스 규모 기준 상한) */
+  findRecent(limit = 500): Promise<Penalty[]> {
+    return this.penaltiesRepo.find({
+      relations: ['creator'],
+      order: { created_at: 'DESC' },
+      take: limit,
+    });
+  }
+
   async create(
     data: { student_name: string; reason: string; week_start?: string },
     userId: number,

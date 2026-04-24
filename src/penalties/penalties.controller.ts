@@ -23,6 +23,12 @@ import { User } from '../entities/user.entity';
 export class PenaltiesController {
   constructor(private readonly penaltiesService: PenaltiesService) {}
 
+  @Get('recent')
+  async findRecent() {
+    const penalties = await this.penaltiesService.findRecent(500);
+    return penalties;
+  }
+
   @Get()
   async findByWeek(
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
