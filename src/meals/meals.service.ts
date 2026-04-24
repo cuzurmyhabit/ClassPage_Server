@@ -126,13 +126,20 @@ export class MealsService {
     const mealDate = toDateKey(dateObj);
 
     const settings = await this.settingsService.loadAll();
-    const officeCode = (settings.office_code ?? '').trim();
-    const schoolCode = (settings.school_code ?? '').trim();
-    const missingCodesMessage =
-      '관리자 페이지에서 교육청 코드와 학교 코드를 입력하면 급식을 자동으로 불러옵니다.';
+    const officeCode =
+      (settings.office_code ?? '').trim() ||
+      (process.env.NEIS_OFFICE_CODE ?? '').trim();
+    const schoolCode =
+      (settings.school_code ?? '').trim() ||
+      (process.env.NEIS_SCHOOL_CODE ?? '').trim();
+
+    const apiKey = (process.env.NEIS_API_KEY ?? '').trim();
+    if (!apiKey) {
+      return 'NEIS_API_KEY가 비어 있습니다. 서버 .env에 나이스 인증키를 넣은 뒤 재시작하세요.';
+    }
 
     if (!officeCode || !schoolCode) {
-      return missingCodesMessage;
+      return '교육청 코드·학교 코드가 없습니다. 관리자 설정 또는 .env의 NEIS_OFFICE_CODE, NEIS_SCHOOL_CODE를 확인하세요.';
     }
 
     if (!forceRefresh) {
@@ -142,7 +149,6 @@ export class MealsService {
       }
     }
 
-    const apiKey = process.env.NEIS_API_KEY ?? 'sample';
     const ymd = formatYmd(dateObj);
     const url = new URL('https://open.neis.go.kr/hub/mealServiceDietInfo');
     url.searchParams.set('KEY', apiKey);

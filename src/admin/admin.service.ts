@@ -127,7 +127,8 @@ export class AdminService {
       address: string;
     }[]
   > {
-    const apiKey = process.env.NEIS_API_KEY ?? 'sample';
+    const apiKey = (process.env.NEIS_API_KEY ?? '').trim();
+    if (!apiKey) return [];
     const url = new URL('https://open.neis.go.kr/hub/schoolInfo');
     url.searchParams.set('KEY', apiKey);
     url.searchParams.set('Type', 'json');

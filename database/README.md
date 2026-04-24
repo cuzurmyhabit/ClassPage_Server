@@ -28,6 +28,12 @@ DB_USERNAME=classpage
 DB_PASSWORD=classpage1234
 DB_DATABASE=classpage
 DB_SYNC=false
+
+# 급식(나이스) — 인증키 필수. 교육청/학교 코드는 DB `settings`에 있으면 그걸 쓰고,
+# 비어 있으면 아래 환경변수로 조회합니다.
+NEIS_API_KEY=발급받은_키
+NEIS_OFFICE_CODE=B10
+NEIS_SCHOOL_CODE=행정표준학교코드
 ```
 
 ## 3) 최초 관리자 계정 생성
