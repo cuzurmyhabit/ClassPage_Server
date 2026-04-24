@@ -7,6 +7,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const apiPrefix = process.env.API_PREFIX?.trim();
+  if (apiPrefix) {
+    app.setGlobalPrefix(apiPrefix);
+  }
   app.use(json({ limit: '15mb' }));
   app.use(urlencoded({ extended: true, limit: '15mb' }));
 

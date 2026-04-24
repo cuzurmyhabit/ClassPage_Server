@@ -1,5 +1,9 @@
 # ClassPage DB 구축 가이드
 
+## 0) Oracle / VPS에 웹+API+DB 한 번에 올리기
+
+`deploy/README.md` 와 루트의 `docker-compose.stack.yml` 참고.
+
 ## 1) DB 실행
 
 `ClassPage_Server` 경로에서 아래 명령 실행:

@@ -1,0 +1,72 @@
+# 웹(nginx+정적) + Nest API + MySQL 한 VM에서 한 번에
+#
+# 디렉터리 구조 (부모에 클라이언트 저장소가 있어야 함):
+#   Parent/
+#     ClassPage_Server/    ← 여기서 docker compose 실행
+#     ClassPage_Client/
+#
+# 1) deploy/stack.env.example 을 deploy/stack.env 로 복사 후 값 수정
+# 2) ClassPage_Server 디렉터리에서:
+#    docker compose -f docker-compose.stack.yml --env-file deploy/stack.env up -d --build
+#
+# 브라우저: http://공인IP:포트/  (기본 HTTP_PORT=80)
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: classpage-stack-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-root}
+      MYSQL_DATABASE: classpage
+      MYSQL_USER: classpage
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-classpage1234}
+    volumes:
+      - classpage_stack_mysql:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: classpage-stack-api
+    restart: unless-stopped
+    env_file:
+      - ./deploy/stack.env
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: classpage
+      DB_PASSWORD: ${MYSQL_PASSWORD:-classpage1234}
+      DB_DATABASE: classpage
+      DB_SYNC: "false"
+      API_PREFIX: api
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  web:
+    build:
+      context: ..
+      dockerfile: ClassPage_Server/docker/Dockerfile.web
+    container_name: classpage-stack-web
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - api
+
+volumes:
+  classpage_stack_mysql:

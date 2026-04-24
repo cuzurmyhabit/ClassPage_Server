@@ -1,0 +1,14 @@
+# 빌드 컨텍스트: ClassPage_Server 와 ClassPage_Client 의 공통 부모 디렉터리
+FROM node:20-bookworm AS client
+WORKDIR /client
+COPY ClassPage_Client/package.json ClassPage_Client/package-lock.json ./
+RUN npm ci
+COPY ClassPage_Client/ ./
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+FROM nginx:1.27-alpine
+COPY --from=client /client/dist /usr/share/nginx/html
+COPY ClassPage_Server/docker/nginx.stack.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
