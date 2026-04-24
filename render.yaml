@@ -1,0 +1,36 @@
+# Render Blueprint — PostgreSQL + Nest API
+# https://render.com/docs/blueprint-spec
+databases:
+  - name: classpage-db
+    plan: free
+    databaseName: classpage
+    user: classpage
+
+services:
+  - type: web
+    name: classpage-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/main.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_SSL
+        value: 'true'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: classpage-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: NEIS_API_KEY
+        sync: false
+      - key: NEIS_OFFICE_CODE
+        sync: false
+      - key: NEIS_SCHOOL_CODE
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

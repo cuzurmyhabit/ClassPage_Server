@@ -19,7 +19,7 @@ export class Assignment {
   @Column({ type: 'text', default: '' })
   description: string;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   due_at: Date | null;
 
   @Column()

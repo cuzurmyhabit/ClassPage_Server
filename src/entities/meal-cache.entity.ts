@@ -8,6 +8,6 @@ export class MealCache {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'timestamp' })
   fetched_at: Date;
 }

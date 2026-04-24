@@ -20,16 +20,30 @@ const DEMOS: { username: string; name: string; role: UserRole }[] = [
 ];
 
 async function main() {
-  const ds = new DataSource({
-    type: 'mysql',
-    host: process.env.DB_HOST ?? '127.0.0.1',
-    port: Number(process.env.DB_PORT ?? 3306),
-    username: process.env.DB_USERNAME ?? 'classpage',
-    password: process.env.DB_PASSWORD ?? 'classpage1234',
-    database: process.env.DB_DATABASE ?? 'classpage',
-    entities: [User],
-    synchronize: false,
-  });
+  const url = process.env.DATABASE_URL?.trim();
+  const ds = new DataSource(
+    url
+      ? {
+          type: 'postgres',
+          url,
+          ssl:
+            process.env.DB_SSL === 'true'
+              ? { rejectUnauthorized: false }
+              : false,
+          entities: [User],
+          synchronize: false,
+        }
+      : {
+          type: 'postgres',
+          host: process.env.DB_HOST ?? '127.0.0.1',
+          port: Number(process.env.DB_PORT ?? 5432),
+          username: process.env.DB_USERNAME ?? 'classpage',
+          password: process.env.DB_PASSWORD ?? 'classpage1234',
+          database: process.env.DB_DATABASE ?? 'classpage',
+          entities: [User],
+          synchronize: false,
+        },
+  );
   await ds.initialize();
   const repo = ds.getRepository(User);
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);

@@ -1,22 +1,18 @@
 services:
   classpage-db:
-    image: mysql:8.4
+    image: postgres:16-alpine
     container_name: classpage-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root1234
-      MYSQL_DATABASE: classpage
-      MYSQL_USER: classpage
-      MYSQL_PASSWORD: classpage1234
+      POSTGRES_USER: classpage
+      POSTGRES_PASSWORD: classpage1234
+      POSTGRES_DB: classpage
       TZ: Asia/Seoul
     ports:
-      - "3307:3306"
-    command:
-      - "--character-set-server=utf8mb4"
-      - "--collation-server=utf8mb4_unicode_ci"
+      - "5432:5432"
     volumes:
-      - classpage_mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - classpage_pg_data:/var/lib/postgresql/data
+      - ./database/init.postgresql.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 
 volumes:
-  classpage_mysql_data:
+  classpage_pg_data:

@@ -1,6 +1,5 @@
-# 웹(nginx+정적) + Nest API + MySQL 한 VM에서 한 번에
+# 웹(nginx+정적) + Nest API + PostgreSQL 한 VM에서 한 번에
 #
-# 디렉터리 구조 (부모에 클라이언트 저장소가 있어야 함):
 #   Parent/
 #     ClassPage_Server/    ← 여기서 docker compose 실행
 #     ClassPage_Client/
@@ -13,26 +12,22 @@
 
 services:
   db:
-    image: mysql:8.4
+    image: postgres:16-alpine
     container_name: classpage-stack-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me-root}
-      MYSQL_DATABASE: classpage
-      MYSQL_USER: classpage
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-classpage1234}
+      POSTGRES_USER: classpage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-classpage1234}
+      POSTGRES_DB: classpage
     volumes:
-      - classpage_stack_mysql:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    command:
-      - "--character-set-server=utf8mb4"
-      - "--collation-server=utf8mb4_unicode_ci"
+      - classpage_stack_pg:/var/lib/postgresql/data
+      - ./database/init.postgresql.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      test: ['CMD-SHELL', 'pg_isready -U classpage -d classpage']
       interval: 5s
       timeout: 5s
-      retries: 30
-      start_period: 45s
+      retries: 20
+      start_period: 15s
 
   api:
     build:
@@ -40,22 +35,25 @@ services:
       dockerfile: docker/Dockerfile.api
     container_name: classpage-stack-api
     restart: unless-stopped
-    env_file:
-      - ./deploy/stack.env
     environment:
       PORT: 3000
       DB_HOST: db
-      DB_PORT: 3306
+      DB_PORT: 5432
       DB_USERNAME: classpage
-      DB_PASSWORD: ${MYSQL_PASSWORD:-classpage1234}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-classpage1234}
       DB_DATABASE: classpage
-      DB_SYNC: "false"
+      DB_SYNC: 'false'
       API_PREFIX: api
+      JWT_SECRET: ${JWT_SECRET:?deploy/stack.env 에 JWT_SECRET 을 설정하세요}
+      NEIS_API_KEY: ${NEIS_API_KEY:-}
+      NEIS_OFFICE_CODE: ${NEIS_OFFICE_CODE:-}
+      NEIS_SCHOOL_CODE: ${NEIS_SCHOOL_CODE:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
     depends_on:
       db:
         condition: service_healthy
     expose:
-      - "3000"
+      - '3000'
 
   web:
     build:
@@ -64,9 +62,9 @@ services:
     container_name: classpage-stack-web
     restart: unless-stopped
     ports:
-      - "${HTTP_PORT:-80}:80"
+      - '${HTTP_PORT:-80}:80'
     depends_on:
       - api
 
 volumes:
-  classpage_stack_mysql:
+  classpage_stack_pg:

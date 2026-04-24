@@ -1,18 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  Announcement,
-  Assignment,
-  EmploymentPost,
-  Event,
-  MealCache,
-  Penalty,
-  Portfolio,
-  Rule,
-  Setting,
-  User,
-} from './entities';
 import { AuthModule } from './auth/auth.module';
+import { buildTypeOrmOptions } from './typeorm.config';
 import { UsersModule } from './users/users.module';
 import { SettingsModule } from './settings/settings.module';
 import { EmploymentModule } from './employment/employment.module';
@@ -27,27 +16,7 @@ import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST ?? '127.0.0.1',
-      port: Number(process.env.DB_PORT ?? 3306),
-      username: process.env.DB_USERNAME ?? 'classpage',
-      password: process.env.DB_PASSWORD ?? 'classpage1234',
-      database: process.env.DB_DATABASE ?? 'classpage',
-      entities: [
-        User,
-        Event,
-        EmploymentPost,
-        Portfolio,
-        Rule,
-        Penalty,
-        Announcement,
-        Assignment,
-        Setting,
-        MealCache,
-      ],
-      synchronize: (process.env.DB_SYNC ?? 'false') === 'true',
-    }),
+    TypeOrmModule.forRoot(buildTypeOrmOptions()),
     AuthModule,
     UsersModule,
     SettingsModule,

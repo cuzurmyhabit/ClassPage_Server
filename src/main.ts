@@ -31,6 +31,11 @@ async function bootstrap() {
     }),
   );
 
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.get('/health', (_req, res) => {
+    res.status(200).type('text/plain').send('ok');
+  });
+
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
   console.log(`ClassPage server is running on port ${port}`);
