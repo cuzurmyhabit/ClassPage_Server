@@ -99,9 +99,8 @@ export class PortfoliosService {
       throw new NotFoundException();
     }
     const isAdmin = userRole === 'admin';
-    const isOwnerStudent =
-      userRole === 'student' && portfolio.student_id === userId;
-    if (!isAdmin && !isOwnerStudent) {
+    const isOwner = portfolio.student_id === userId;
+    if (!isAdmin && !isOwner) {
       throw new ForbiddenException();
     }
     await this.portfolioRepo.delete(id);

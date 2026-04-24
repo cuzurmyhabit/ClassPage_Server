@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Penalty } from '../entities/penalty.entity';
@@ -49,22 +49,64 @@ export class PenaltiesService {
   }
 
   async create(
-    data: { student_name: string; reason: string; week_start?: string },
+    data: {
+      student_name: string;
+      reason: string;
+      week_start?: string;
+      start_date?: string;
+      end_date?: string;
+    },
     userId: number,
   ): Promise<Penalty> {
-    const weekStart =
-      data.week_start ?? toDateOnlyString(weekStartFor(new Date()));
+    const startDate =
+      data.start_date ??
+      data.week_start ??
+      toDateOnlyString(weekStartFor(new Date()));
+    const weekStart = data.week_start ?? startDate;
     const row = this.penaltiesRepo.create({
       student_name: data.student_name,
       reason: data.reason,
       week_start: weekStart,
+      start_date: startDate,
+      end_date: data.end_date ?? null,
+      status: 'open',
       created_by: userId,
     });
     return this.penaltiesRepo.save(row);
   }
 
   async delete(id: number): Promise<void> {
-    await this.penaltiesRepo.delete(id);
+    const result = await this.penaltiesRepo.delete(id);
+    if ((result.affected ?? 0) === 0) {
+      throw new NotFoundException();
+    }
+  }
+
+  async update(
+    id: number,
+    data: {
+      student_name?: string;
+      reason?: string;
+      start_date?: string;
+      end_date?: string;
+      status?: 'open' | 'resolved' | 'waived';
+    },
+  ): Promise<Penalty> {
+    const row = await this.penaltiesRepo.findOneBy({ id });
+    if (!row) {
+      throw new NotFoundException();
+    }
+    if (data.student_name !== undefined) row.student_name = data.student_name;
+    if (data.reason !== undefined) row.reason = data.reason;
+    if (data.start_date !== undefined) {
+      row.start_date = data.start_date;
+      row.week_start = data.start_date;
+    }
+    if (data.end_date !== undefined) {
+      row.end_date = data.end_date === '' ? null : data.end_date;
+    }
+    if (data.status !== undefined) row.status = data.status;
+    return this.penaltiesRepo.save(row);
   }
 
   /** Monday for `new Date()` plus `offset` whole weeks. */

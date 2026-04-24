@@ -7,11 +7,13 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { PenaltiesService } from './penalties.service';
 import { CreatePenaltyDto } from './dto/create-penalty.dto';
+import { UpdatePenaltyDto } from './dto/update-penalty.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -55,6 +57,13 @@ export class PenaltiesController {
   @Roles('admin', 'teacher')
   create(@Body() dto: CreatePenaltyDto, @CurrentUser() user: User) {
     return this.penaltiesService.create(dto, user.id);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'teacher')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdatePenaltyDto) {
+    return this.penaltiesService.update(id, dto);
   }
 
   @Delete(':id')

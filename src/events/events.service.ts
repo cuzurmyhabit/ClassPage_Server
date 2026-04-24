@@ -39,6 +39,8 @@ export type ImportEventInput = {
   title: string;
   description?: string;
   event_date: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 export type ImportEventsSummary = {
@@ -86,21 +88,33 @@ export class EventsService {
     const start = `${year}-${m}-01`;
     const endDay = lastDayOfMonth(year, month);
     const end = `${year}-${m}-${String(endDay).padStart(2, '0')}`;
-    return this.eventRepo.find({
-      where: { event_date: Between(start, end) },
-      relations: ['creator'],
-      order: { event_date: 'ASC' },
-    });
+    return this.eventRepo
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.creator', 'creator')
+      .where('event.start_date <= :end', { end })
+      .andWhere('(event.end_date IS NULL OR event.end_date >= :start)', { start })
+      .orderBy('event.start_date', 'ASC')
+      .addOrderBy('event.event_date', 'ASC')
+      .getMany();
   }
 
   async create(
-    data: { title: string; description?: string; event_date: string },
+    data: {
+      title: string;
+      description?: string;
+      event_date: string;
+      start_date?: string;
+      end_date?: string;
+    },
     userId: number,
   ): Promise<Event> {
+    const startDate = data.start_date ?? data.event_date;
     const event = this.eventRepo.create({
       title: data.title,
       description: data.description ?? '',
       event_date: data.event_date,
+      start_date: startDate,
+      end_date: data.end_date ?? null,
       created_by: userId,
     });
     return this.eventRepo.save(event);
@@ -108,7 +122,13 @@ export class EventsService {
 
   async update(
     id: number,
-    data: { title?: string; description?: string; event_date?: string },
+    data: {
+      title?: string;
+      description?: string;
+      event_date?: string;
+      start_date?: string;
+      end_date?: string;
+    },
   ): Promise<Event> {
     const event = await this.eventRepo.findOneBy({ id });
     if (!event) {
@@ -117,6 +137,10 @@ export class EventsService {
     if (data.title !== undefined) event.title = data.title;
     if (data.description !== undefined) event.description = data.description;
     if (data.event_date !== undefined) event.event_date = data.event_date;
+    if (data.start_date !== undefined) event.start_date = data.start_date;
+    if (data.end_date !== undefined) {
+      event.end_date = data.end_date === '' ? null : data.end_date;
+    }
     return this.eventRepo.save(event);
   }
 
@@ -195,6 +219,8 @@ export class EventsService {
             title: item.title,
             description: item.description ?? '',
             event_date: item.event_date,
+            start_date: item.start_date ?? item.event_date,
+            end_date: item.end_date ?? null,
             created_by: userId,
           }),
         );

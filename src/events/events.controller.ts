@@ -69,6 +69,8 @@ export class EventsController {
         title: dto.title,
         description: dto.description ?? '',
         event_date: dto.event_date,
+        start_date: dto.start_date,
+        end_date: dto.end_date,
       },
       user.id,
     );
@@ -98,6 +100,8 @@ export class EventsController {
         title: e.title,
         description: e.description ?? '',
         event_date: e.event_date,
+        start_date: e.event_date,
+        end_date: undefined,
       })),
       user.id,
       body.replaceExisting,

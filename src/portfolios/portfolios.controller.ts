@@ -36,7 +36,7 @@ export class PortfoliosController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('student')
+  @Roles('student', 'career')
   create(
     @Body() dto: CreatePortfolioDto,
     @CurrentUser() user: User,

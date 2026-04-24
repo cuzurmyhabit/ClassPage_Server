@@ -12,4 +12,12 @@ export class CreatePenaltyDto {
   @IsOptional()
   @IsString()
   week_start?: string;
+
+  @IsOptional()
+  @IsString()
+  start_date?: string;
+
+  @IsOptional()
+  @IsString()
+  end_date?: string;
 }

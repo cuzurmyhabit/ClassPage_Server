@@ -22,6 +22,15 @@ export class Penalty {
   @Column({ type: 'date' })
   week_start: string;
 
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
+  start_date: string;
+
+  @Column({ type: 'date', nullable: true })
+  end_date: string | null;
+
+  @Column({ length: 20, default: 'open' })
+  status: 'open' | 'resolved' | 'waived';
+
   @Column()
   created_by: number;
 

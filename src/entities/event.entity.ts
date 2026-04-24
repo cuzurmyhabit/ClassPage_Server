@@ -22,6 +22,12 @@ export class Event {
   @Column({ type: 'date' })
   event_date: string;
 
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
+  start_date: string;
+
+  @Column({ type: 'date', nullable: true })
+  end_date: string | null;
+
   @Column()
   created_by: number;
 

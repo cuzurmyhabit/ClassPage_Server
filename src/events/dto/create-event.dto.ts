@@ -12,4 +12,12 @@ export class CreateEventDto {
   @IsString()
   @IsNotEmpty()
   event_date: string;
+
+  @IsString()
+  @IsOptional()
+  start_date?: string;
+
+  @IsString()
+  @IsOptional()
+  end_date?: string;
 }
