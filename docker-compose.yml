@@ -1,7 +1,7 @@
 services:
   classpage-db:
     image: postgres:16-alpine
-    container_name: classpage-db
+    container_name: classpage-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: classpage

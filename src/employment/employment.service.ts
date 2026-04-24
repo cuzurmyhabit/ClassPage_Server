@@ -66,7 +66,7 @@ export class EmploymentService {
 
   async delete(id: number): Promise<void> {
     const result = await this.employmentRepo.delete(id);
-    if (!result.affected) {
+    if ((result.affected ?? 0) === 0) {
       throw new NotFoundException();
     }
   }

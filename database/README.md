@@ -6,14 +6,42 @@
 
 ## 1) 로컬 DB 실행
 
+### MySQL 컨테이너만 예전에 쓰던 경우 (로그인·CRUD 전부 실패할 때)
+
+이 레포는 **PostgreSQL만** 지원합니다. 아직 `mysql:8.4` 컨테이너가 떠 있거나 `.env`에 `DB_PORT=3307` 이 남아 있으면 API가 DB에 붙지 않습니다.
+
+1. 예전 DB 컨테이너 중지·삭제: `docker rm -f classpage-db classpage-postgres 2>/dev/null`  
+2. 볼륨까지 비우고 다시 올리기(로컬 데이터 초기화):
+
+```bash
+cd ClassPage_Server
+npm run db:reset
+```
+
+3. `.env` 확인: **`DB_PORT=5432`**, `DB_HOST=127.0.0.1`, **`DATABASE_URL` 비우기**(로컬 Docker만 쓸 때).
+
+### 정상 기동
+
 `ClassPage_Server` 경로에서:
 
 ```bash
 docker compose up -d
 ```
 
-- PostgreSQL 16 컨테이너가 뜹니다 (포트 **5432**).
-- 최초 실행 시 `database/init.postgresql.sql`이 적용되어 테이블·기본 설정이 생성됩니다.
+- PostgreSQL 16 (`container_name`: **classpage-postgres**, 호스트 포트 **5432**).
+- 최초(빈 데이터 볼륨)일 때만 `database/init.postgresql.sql`이 적용됩니다.
+
+테이블 확인:
+
+```bash
+docker exec -i classpage-postgres psql -U classpage -d classpage -c '\dt'
+```
+
+### 예전 PostgreSQL DB에 `settings.key` 컬럼만 남아 있는 경우
+
+```bash
+docker exec -i classpage-postgres psql -U classpage -d classpage < database/migrate-settings-key-column.sql
+```
 
 ## 2) 애플리케이션 .env
 

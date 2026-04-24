@@ -25,11 +25,11 @@ const entities = [
   MealCache,
 ];
 
+/** 로컬 Docker 등에서는 ssl 키를 아예 빼는 편이 안정적입니다. */
 function postgresSsl():
-  | boolean
   | { rejectUnauthorized: boolean }
   | undefined {
-  if (process.env.DB_SSL === 'false') return false;
+  if (process.env.DB_SSL === 'false') return undefined;
   if (process.env.DB_SSL === 'true') return { rejectUnauthorized: false };
   const url = process.env.DATABASE_URL ?? '';
   if (
@@ -39,18 +39,20 @@ function postgresSsl():
   ) {
     return { rejectUnauthorized: false };
   }
-  return false;
+  return undefined;
 }
 
 export function buildTypeOrmOptions(): TypeOrmModuleOptions {
   const synchronize = (process.env.DB_SYNC ?? 'false') === 'true';
   const url = process.env.DATABASE_URL?.trim();
+  const ssl = postgresSsl();
+  const sslOpt = ssl ? { ssl } : {};
 
   if (url) {
     return {
       type: 'postgres',
       url,
-      ssl: postgresSsl(),
+      ...sslOpt,
       entities,
       synchronize,
     };
@@ -63,7 +65,7 @@ export function buildTypeOrmOptions(): TypeOrmModuleOptions {
     username: process.env.DB_USERNAME ?? 'classpage',
     password: process.env.DB_PASSWORD ?? 'classpage1234',
     database: process.env.DB_DATABASE ?? 'classpage',
-    ssl: postgresSsl(),
+    ...sslOpt,
     entities,
     synchronize,
   };

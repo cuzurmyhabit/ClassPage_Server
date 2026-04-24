@@ -15,11 +15,7 @@ export class AssignmentsService {
     return this.assignmentsRepo
       .createQueryBuilder('assignment')
       .leftJoinAndSelect('assignment.creator', 'creator')
-      .orderBy(
-        'CASE WHEN assignment.due_at IS NULL THEN 1 ELSE 0 END',
-        'ASC',
-      )
-      .addOrderBy('assignment.due_at', 'ASC')
+      .orderBy('assignment.due_at', 'ASC', 'NULLS LAST')
       .addOrderBy('assignment.created_at', 'DESC');
   }
 

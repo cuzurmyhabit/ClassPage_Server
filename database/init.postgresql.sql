@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS assignments (
 CREATE INDEX IF NOT EXISTS idx_assignments_due_at ON assignments(due_at);
 
 CREATE TABLE IF NOT EXISTS settings (
-  "key" VARCHAR(100) PRIMARY KEY,
+  setting_key VARCHAR(100) PRIMARY KEY,
   value TEXT NOT NULL
 );
 
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS meal_cache (
   fetched_at TIMESTAMP NOT NULL
 );
 
-INSERT INTO settings ("key", value) VALUES
+INSERT INTO settings (setting_key, value) VALUES
   ('school_name', '학급 운영 홈'),
   ('class_name', '3학년 1반'),
   ('office_code', 'B10'),
@@ -113,4 +113,4 @@ INSERT INTO settings ("key", value) VALUES
   ('school_display_name', ''),
   ('schedule_source', 'pdf'),
   ('employment_manager_user_id', '')
-ON CONFLICT ("key") DO UPDATE SET value = EXCLUDED.value;
+ON CONFLICT (setting_key) DO UPDATE SET value = EXCLUDED.value;

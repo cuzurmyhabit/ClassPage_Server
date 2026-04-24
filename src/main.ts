@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
+import { buildTypeOrmOptions } from './typeorm.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,6 +38,20 @@ async function bootstrap() {
   });
 
   const port = Number(process.env.PORT ?? 3000);
+  const dbOpts = buildTypeOrmOptions() as {
+    url?: string;
+    host?: string;
+    port?: number;
+    database?: string;
+  };
+  if (dbOpts.url) {
+    console.log('[DB] postgres (DATABASE_URL)');
+  } else {
+    console.log(
+      `[DB] postgres ${dbOpts.host}:${dbOpts.port}/${dbOpts.database}`,
+    );
+  }
+
   await app.listen(port);
   console.log(`ClassPage server is running on port ${port}`);
 }
