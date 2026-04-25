@@ -122,7 +122,7 @@ export class MealsService {
     const monday = startOfWeekMonday(new Date());
     monday.setDate(monday.getDate() + offset * 7);
     const out: { date: string; content: string }[] = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       const date = toDateKey(d);
