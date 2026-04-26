@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { BootstrapAdminDto } from './dto/bootstrap-admin.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { User } from '../entities/user.entity';
@@ -21,6 +22,15 @@ export class AuthController {
       dto.username,
       dto.password,
       dto.name?.trim() || '관리자',
+    );
+  }
+
+  @Post('change-password')
+  changePassword(@Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(
+      dto.username,
+      dto.currentPassword,
+      dto.newPassword,
     );
   }
 

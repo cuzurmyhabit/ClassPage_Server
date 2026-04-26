@@ -24,6 +24,9 @@ export class User {
   @Column({ length: 20 })
   role: UserRole;
 
+  @Column({ type: 'boolean', default: true })
+  must_change_password: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 }

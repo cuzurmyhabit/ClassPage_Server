@@ -6,8 +6,12 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(100) NOT NULL,
   role VARCHAR(20) NOT NULL,
+  must_change_password BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE TABLE IF NOT EXISTS events (
   id SERIAL PRIMARY KEY,
@@ -124,28 +128,29 @@ ON CONFLICT (setting_key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 기본 학급 계정 (공통 비밀번호: 1234)
 -- password_hash = bcrypt("1234", 10)
-INSERT INTO users (username, password_hash, name, role) VALUES
-  ('3200', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임진하', 'teacher'),
-  ('3201', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '곽자경', 'student'),
-  ('3202', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '김효일', 'student'),
-  ('3203', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '박진우', 'student'),
-  ('3204', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '박태윤', 'student'),
-  ('3205', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '송민채', 'student'),
-  ('3206', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '우지영', 'student'),
-  ('3207', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '육준성', 'student'),
-  ('3208', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '윤성연', 'student'),
-  ('3209', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '윤시웅', 'student'),
-  ('3210', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '이상희', 'student'),
-  ('3211', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임소영', 'student'),
-  ('3212', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임지유', 'student'),
-  ('3213', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임하정', 'student'),
-  ('3214', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '장세은', 'student'),
-  ('3215', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '정다운', 'student'),
-  ('3216', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '지수민', 'career')
+INSERT INTO users (username, password_hash, name, role, must_change_password) VALUES
+  ('3200', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임진하', 'teacher', TRUE),
+  ('3201', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '곽자경', 'student', TRUE),
+  ('3202', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '김효일', 'student', TRUE),
+  ('3203', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '박진우', 'student', TRUE),
+  ('3204', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '박태윤', 'student', TRUE),
+  ('3205', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '송민채', 'student', TRUE),
+  ('3206', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '우지영', 'student', TRUE),
+  ('3207', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '육준성', 'student', TRUE),
+  ('3208', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '윤성연', 'student', TRUE),
+  ('3209', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '윤시웅', 'student', TRUE),
+  ('3210', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '이상희', 'student', TRUE),
+  ('3211', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임소영', 'student', TRUE),
+  ('3212', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임지유', 'student', TRUE),
+  ('3213', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '임하정', 'student', TRUE),
+  ('3214', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '장세은', 'student', TRUE),
+  ('3215', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '정다운', 'student', TRUE),
+  ('3216', '$2b$10$g6P7h8lrkwfQ2CNfoph8V.RfsiwXontSNmlwvPFpXx1m6sM2jMw5O', '지수민', 'career', TRUE)
 ON CONFLICT (username) DO UPDATE SET
   password_hash = EXCLUDED.password_hash,
   name = EXCLUDED.name,
-  role = EXCLUDED.role;
+  role = EXCLUDED.role,
+  must_change_password = EXCLUDED.must_change_password;
 
 UPDATE settings
 SET value = (

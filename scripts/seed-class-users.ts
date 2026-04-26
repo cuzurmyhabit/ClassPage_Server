@@ -67,6 +67,7 @@ async function main() {
       existing.name = candidate.name;
       existing.role = candidate.role;
       existing.password_hash = hash;
+      existing.must_change_password = true;
       await userRepo.save(existing);
       console.log(`updated: ${candidate.username} (${candidate.role})`);
       continue;
@@ -78,6 +79,7 @@ async function main() {
         name: candidate.name,
         role: candidate.role,
         password_hash: hash,
+        must_change_password: true,
       }),
     );
     console.log(`created: ${candidate.username} (${candidate.role})`);
