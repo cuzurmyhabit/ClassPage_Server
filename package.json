@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "test:meals": "node --test --require ts-node/register test/meals-concurrency.test.cjs",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "start:dev": "node -r ts-node/register -r tsconfig-paths/register src/main.ts",

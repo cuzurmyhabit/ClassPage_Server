@@ -109,6 +109,9 @@ function parseNeisStructuredMeals(payload: unknown): StructuredDayMeals | null {
 
 @Injectable()
 export class MealsService {
+  // NestJS singleton 범위에서 같은 학교·날짜의 외부 조회와 저장을 공유합니다.
+  private readonly inFlightMeals = new Map<string, Promise<string>>();
+
   constructor(
     @InjectRepository(MealCache)
     private readonly mealCacheRepo: Repository<MealCache>,
@@ -157,22 +160,70 @@ export class MealsService {
       return '교육청 코드·학교 코드가 없습니다. 관리자 설정 또는 .env의 NEIS_OFFICE_CODE, NEIS_SCHOOL_CODE를 확인하세요.';
     }
 
+    const key = JSON.stringify([officeCode, schoolCode, mealDate]);
+    const running = this.inFlightMeals.get(key);
+    if (running) return running;
+
     if (!forceRefresh) {
-      const cached = await this.mealCacheRepo.findOneBy({ meal_date: mealDate });
-      if (cached?.content?.trim()) {
-        const c = cached.content.trim();
-        // 예전 버전에서 실패/안내 문구를 캐시한 경우 → 무시하고 NEIS 재조회
-        if (c.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(c) as Record<string, unknown>;
-            if (parsed.breakfast || parsed.lunch || parsed.dinner) {
-              return cached.content;
-            }
-          } catch {
-            /* 재조회 */
-          }
-        }
+      const cached = await this.readCachedMeal(mealDate);
+      // 캐시 조회 중 강제 갱신이 시작됐다면 오래된 캐시 대신 새 결과를 기다립니다.
+      const refreshing = this.inFlightMeals.get(key);
+      if (refreshing) return refreshing;
+      if (cached !== null) return cached;
+    }
+
+    // DB 조회를 기다리는 동안 다른 요청이 조회를 시작했을 수 있습니다.
+    const startedWhileReading = this.inFlightMeals.get(key);
+    if (startedWhileReading) return startedWhileReading;
+
+    const pending = this.fetchAndCacheMeal(
+      mealDate,
+      dateObj,
+      officeCode,
+      schoolCode,
+      apiKey,
+      forceRefresh,
+    );
+    this.inFlightMeals.set(key, pending);
+
+    try {
+      return await pending;
+    } finally {
+      // 네트워크/파싱/DB 오류가 발생해도 다음 요청이 재시도할 수 있도록 정리합니다.
+      if (this.inFlightMeals.get(key) === pending) {
+        this.inFlightMeals.delete(key);
       }
+    }
+  }
+
+  private async readCachedMeal(mealDate: string): Promise<string | null> {
+    const cached = await this.mealCacheRepo.findOneBy({ meal_date: mealDate });
+    const content = cached?.content?.trim();
+    if (!content?.startsWith('{')) return null;
+
+    try {
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      if (parsed && (parsed.breakfast || parsed.lunch || parsed.dinner)) {
+        return cached.content;
+      }
+    } catch {
+      // 실패 안내문, 잘못된 JSON, 빈 급식 데이터는 재사용하지 않습니다.
+    }
+    return null;
+  }
+
+  private async fetchAndCacheMeal(
+    mealDate: string,
+    dateObj: Date,
+    officeCode: string,
+    schoolCode: string,
+    apiKey: string,
+    forceRefresh: boolean,
+  ): Promise<string> {
+    if (!forceRefresh) {
+      // 이전 DB 조회가 늦게 끝난 경우, 먼저 완료된 요청이 저장한 캐시를 재확인합니다.
+      const cached = await this.readCachedMeal(mealDate);
+      if (cached !== null) return cached;
     }
 
     const ymd = formatYmd(dateObj);
@@ -187,7 +238,10 @@ export class MealsService {
 
     let content = '';
     try {
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), {
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) throw new Error('NEIS request failed');
       const text = await res.text();
       let payload: unknown;
       try {
@@ -214,16 +268,10 @@ export class MealsService {
   }
 
   private async cacheMeal(mealDate: string, content: string): Promise<void> {
-    const existing = await this.mealCacheRepo.findOneBy({ meal_date: mealDate });
-    const fetched_at = new Date();
-    if (existing) {
-      existing.content = content;
-      existing.fetched_at = fetched_at;
-      await this.mealCacheRepo.save(existing);
-    } else {
-      await this.mealCacheRepo.save(
-        this.mealCacheRepo.create({ meal_date: mealDate, content, fetched_at }),
-      );
-    }
+    // ON CONFLICT (meal_date) DO UPDATE: 다른 프로세스의 동시 저장도 원자적으로 처리합니다.
+    await this.mealCacheRepo.upsert(
+      { meal_date: mealDate, content, fetched_at: new Date() },
+      ['meal_date'],
+    );
   }
 }
