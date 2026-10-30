@@ -4,3 +4,12 @@ dist
 *.md
 .env
 .env.*
+
+**/.env
+**/.env.*
+deploy/*.env
+deploy/*.env.*
+*.pem
+*.key
+*.p12
+*.pfx

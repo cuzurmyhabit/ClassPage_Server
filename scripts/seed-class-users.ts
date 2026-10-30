@@ -1,3 +1,4 @@
+import { requireEnvironment } from '../src/config/environment';
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -8,7 +9,7 @@ import { Setting } from '../src/entities/setting.entity';
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const COMMON_PASSWORD = process.env.CLASS_USERS_SEED_PASSWORD ?? '1234';
+const COMMON_PASSWORD = requireEnvironment('CLASS_USERS_SEED_PASSWORD', 12);
 
 const CLASS_USERS: { username: string; name: string; role: UserRole }[] = [
   { name: '임진하', username: '3200', role: 'teacher' },
@@ -49,7 +50,7 @@ async function main() {
           host: process.env.DB_HOST ?? '127.0.0.1',
           port: Number(process.env.DB_PORT ?? 5432),
           username: process.env.DB_USERNAME ?? 'classpage',
-          password: process.env.DB_PASSWORD ?? 'classpage1234',
+          password: requireEnvironment('DB_PASSWORD'),
           database: process.env.DB_DATABASE ?? 'classpage',
           entities: [User, Setting],
           synchronize: false,
@@ -105,7 +106,7 @@ async function main() {
   }
 
   console.log('');
-  console.log('공통 비밀번호:', COMMON_PASSWORD);
+  console.log('Seed complete. Password was supplied through the environment and is not logged.');
   console.log(
     '변경하려면 CLASS_USERS_SEED_PASSWORD 값을 지정해서 다시 실행하세요.',
   );
@@ -113,6 +114,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error('Seeding failed. Check required environment and database access.');
   process.exit(1);
 });

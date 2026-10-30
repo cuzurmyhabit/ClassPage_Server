@@ -51,7 +51,7 @@ docker exec -i classpage-postgres psql -U classpage -d classpage < database/migr
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_USERNAME=classpage
-DB_PASSWORD=classpage1234
+DB_PASSWORD=classpage<explicit-seed-password-from-env>
 DB_DATABASE=classpage
 DB_SYNC=false
 
@@ -72,7 +72,7 @@ DB가 비어 있을 때 한 번만:
 ```json
 {
   "username": "admin",
-  "password": "admin1234",
+  "password": "admin<explicit-seed-password-from-env>",
   "name": "담임선생님"
 }
 ```
@@ -88,7 +88,7 @@ npm run seed:demo
 ```
 
 - 아이디: `student_demo`, `teacher_demo`, `career_demo`
-- 기본 비밀번호: `ClassPage2026!` (`.env`에 `DEMO_SEED_PASSWORD` 가능)
+- 시드 비밀번호는 기본값 없이 해당 seed 환경 변수로 명시적으로 설정합니다 (12자 이상).
 - 이미 있는 `username` 은 건너뜀
 
 ## 5) 취업정보 담당자

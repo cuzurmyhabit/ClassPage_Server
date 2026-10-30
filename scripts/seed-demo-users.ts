@@ -1,3 +1,4 @@
+import { requireEnvironment } from '../src/config/environment';
 /**
  * 공개 데모용 로그인 계정을 DB에 넣습니다. 이미 있으면 건너뜁니다.
  * 사용: 프로젝트 루트에서 `npm run seed:demo` (.env의 DB 설정 사용)
@@ -11,7 +12,7 @@ import { User, UserRole } from '../src/entities/user.entity';
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'ClassPage2026!';
+const DEMO_PASSWORD = requireEnvironment('DEMO_SEED_PASSWORD', 12);
 
 const DEMOS: { username: string; name: string; role: UserRole }[] = [
   { username: 'student_demo', name: '데모 학생', role: 'student' },
@@ -38,7 +39,7 @@ async function main() {
           host: process.env.DB_HOST ?? '127.0.0.1',
           port: Number(process.env.DB_PORT ?? 5432),
           username: process.env.DB_USERNAME ?? 'classpage',
-          password: process.env.DB_PASSWORD ?? 'classpage1234',
+          password: requireEnvironment('DB_PASSWORD'),
           database: process.env.DB_DATABASE ?? 'classpage',
           entities: [User],
           synchronize: false,
@@ -66,12 +67,12 @@ async function main() {
   }
 
   console.log('');
-  console.log('공통 비밀번호:', DEMO_PASSWORD);
-  console.log('(바꾸려면 .env에 DEMO_SEED_PASSWORD=... 후 다시 실행, 이미 있는 아이디는 위에서 skip)');
+  console.log('Seed complete. Password was supplied through the environment and is not logged.');
+  console.log('Seed complete. Use the password supplied through the seed environment variable.');
   await ds.destroy();
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error('Seeding failed. Check required environment and database access.');
   process.exit(1);
 });

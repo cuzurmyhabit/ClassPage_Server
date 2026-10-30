@@ -1,3 +1,4 @@
+import { requireEnvironment } from './config/environment';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import {
   Announcement,
@@ -63,7 +64,7 @@ export function buildTypeOrmOptions(): TypeOrmModuleOptions {
     host: process.env.DB_HOST ?? '127.0.0.1',
     port: Number(process.env.DB_PORT ?? 5432),
     username: process.env.DB_USERNAME ?? 'classpage',
-    password: process.env.DB_PASSWORD ?? 'classpage1234',
+    password: requireEnvironment('DB_PASSWORD'),
     database: process.env.DB_DATABASE ?? 'classpage',
     ...sslOpt,
     entities,

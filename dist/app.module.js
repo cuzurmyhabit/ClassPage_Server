@@ -9,8 +9,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const entities_1 = require("./entities");
 const auth_module_1 = require("./auth/auth.module");
+const typeorm_config_1 = require("./typeorm.config");
 const users_module_1 = require("./users/users.module");
 const settings_module_1 = require("./settings/settings.module");
 const employment_module_1 = require("./employment/employment.module");
@@ -28,27 +28,7 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forRoot({
-                type: 'mysql',
-                host: process.env.DB_HOST ?? '127.0.0.1',
-                port: Number(process.env.DB_PORT ?? 3306),
-                username: process.env.DB_USERNAME ?? 'classpage',
-                password: process.env.DB_PASSWORD ?? 'classpage1234',
-                database: process.env.DB_DATABASE ?? 'classpage',
-                entities: [
-                    entities_1.User,
-                    entities_1.Event,
-                    entities_1.EmploymentPost,
-                    entities_1.Portfolio,
-                    entities_1.Rule,
-                    entities_1.Penalty,
-                    entities_1.Announcement,
-                    entities_1.Assignment,
-                    entities_1.Setting,
-                    entities_1.MealCache,
-                ],
-                synchronize: (process.env.DB_SYNC ?? 'false') === 'true',
-            }),
+            typeorm_1.TypeOrmModule.forRoot((0, typeorm_config_1.buildTypeOrmOptions)()),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             settings_module_1.SettingsModule,

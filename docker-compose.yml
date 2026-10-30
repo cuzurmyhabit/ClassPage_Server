@@ -1,3 +1,5 @@
+# Local-only development database; credentials must be supplied through .env.
+# Production: use docker-compose.stack.yml with explicit POSTGRES_PASSWORD and JWT_SECRET.
 services:
   classpage-db:
     image: postgres:16-alpine
@@ -5,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: classpage
-      POSTGRES_PASSWORD: classpage1234
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env before starting the local database}
       POSTGRES_DB: classpage
       TZ: Asia/Seoul
     ports:
